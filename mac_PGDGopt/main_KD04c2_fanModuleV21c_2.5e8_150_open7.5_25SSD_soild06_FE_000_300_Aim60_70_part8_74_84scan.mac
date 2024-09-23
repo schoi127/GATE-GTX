@@ -1,0 +1,235 @@
+#################################################################
+# 1/  V I S U A L I S A T I O N #################################
+#################################################################
+#/vis/disable
+#/control/execute mac/Visu.mac
+#/vis/viewer/set/viewpointThetaPhi   	90 0
+#/vis/viewer/set/viewpointThetaPhi   	60 30
+/vis/viewer/set/viewpointThetaPhi 	89.999 90
+#/vis/viewer/set/viewpointThetaPhi   	-179.99 0
+/vis/viewer/zoom                    	5.0
+
+#################################################################
+# 2/  V E R B O S I T Y   L E V E L #############################
+#################################################################
+/control/execute mac/Verbose.mac
+
+#################################################################
+# 3/ Materials
+#################################################################
+/gate/geometry/setMaterialDatabase 	GateMaterials.db
+
+#################################################################
+# 4/ Geometries
+#################################################################
+#==============================================================================================
+# Geometry (world)
+#==============================================================================================
+/gate/world/setMaterial             Air
+/gate/world/geometry/setXLength     1.5 m 
+/gate/world/geometry/setYLength     1.5 m 
+/gate/world/geometry/setZLength     1.5 m
+
+#==============================================================================================
+# Geometry (Fanbeam collimator (phase space??))
+#==============================================================================================
+#	#/control/execute 	mac/fanbeam_coll_V21c.mac  # both 'r' shape (mirroring), 54mmH, 4 mmT, slit 2mmW
+#	#/gate/FanBeamModuleUp/moves/insert           translation
+#	#/gate/FanBeamModuleUp/translation/setSpeed   1 0 0 mm/s
+# 	## Make phase space actor to use it as a second source
+# 	##/control/execute 	mac/make_outgoing_phspace_source.mac
+#==========================================================
+# Attach phase space to the physical volume (air) with side collimator
+# A side collimator does not actually needed, but just for the visualization
+# to make sure the spot where the source came from
+#==========================================================
+#/control/execute 	mac/sources/fanbeam_coll_V21c.mac  # both 'r' shape (mirroring), 54mmH, 4 mmT, slit 2mmW
+/control/execute 	mac/sources/AttachedPhSpaceVol.mac
+
+
+#==============================================================================================
+# Geometry (Line scanner)
+#==============================================================================================
+/control/execute 	mac/detectors/LineBackScanner_V1_20mmOffset_Rot0d_1.2mmPixel_transmission.mac   
+# 1.2 mm pixel width (original)
+
+#==============================================================================================
+# Geometry (Pixel Grid)
+# PixelGrid : 20mmH+30mmH(extra)=50mmH, 0.6T, 2.4mmpitch, 70 layers
+# DepthGrid : 2mmW both side, 
+# GridContainer : 3 + 2*2 = 7mmW
+#==============================================================================================
+/control/execute 	mac/grids/PGrid_V02_0.6T_2.4P_32Repeat_50mmW_20mmH.mac
+/control/execute 	mac/grids/DGrid_V02_1.8T_2.4P_33Repeat_3mmW_20mmH.mac
+
+#################################################################
+# 5/ PHANTOM
+#################################################################
+/control/execute mac/phantoms/differ_soil_density_long_deep_phantom/CB00_Soild06_000_300mm_FeBox_20mm_depth_interval.mac
+#/control/execute mac/phantoms/differ_soil_density_long_deep_phantom/CB00_Soild06_000_300mm_HandBone_20mm_depth_interval.mac
+#/control/execute mac/phantoms/differ_soil_density_long_deep_phantom/CB00_Soild06_000_300mm_PlasticBox_20mm_depth_interval.mac
+#/control/execute mac/phantoms/differ_soil_density_long_deep_phantom/CB00_Soild06_000_300mm_RockBox_20mm_depth_interval.mac
+
+#/gate/phbkg/placement/setTranslation 14 0 321 mm	# ZStart (default) for 50mmH Grid -> 136+30 = 166, # (166 + 5mm margin) ~ (166+5+300) / 2
+/gate/phbkg/placement/setTranslation 59 0 291 mm	# (166-30 + 5mm margin) ~ (166-30+5+300) / 2					
+
+#################################################################
+# 6/ Geometry Optimization
+#################################################################
+/control/execute mac/geometry_opt/PGDG_Optimize_V02_25SDD_60_70.mac	# 60~70 mm aiming
+
+#################################################################
+# 7/ Add motion
+#################################################################
+# source
+#==========================================================
+/gate/FanBeamModuleSide/moves/insert           translation
+/gate/FanBeamModuleSide/translation/setSpeed   1 0 0 mm/s
+#==========================================================
+# Detector
+#==========================================================
+/gate/CTscanner/moves/insert           translation
+/gate/CTscanner/translation/setSpeed   1 0 0 mm/s
+#==========================================================
+# grid
+#==========================================================
+/gate/pixel_grid/moves/insert           translation
+/gate/pixel_grid/translation/setSpeed   1 0 0 mm/s
+/gate/grid_direc_r/moves/insert           translation
+/gate/grid_direc_r/translation/setSpeed   1 0 0 mm/s
+/gate/grid_direc_l/moves/insert           translation
+/gate/grid_direc_l/translation/setSpeed   1 0 0 mm/s
+
+
+
+
+# ======================================
+# S Y S T E M
+# ======================================
+# The SPECThead system is made of three levels: base (for the head), crystal (for the crystal and crystal matrix) 
+# and pixel (for individual crystals for pixellated gamma camera)
+# For now, only the base of the system is attached to a volume: the volume SPECThead
+# For the system to get information about your crystal, the level crystal must be attached to the volume 
+# that has been defined for the scintillating crystal (crystal)
+##
+#/gate/systems/SPECThead/crystal/attach crystal
+#/gate/systems/SPECThead/describe
+# ==================================
+# Phantom SD
+# ==================================
+# The phantom SD makes it possible to record Compton events in the volumes within the field of view
+# This can provide information for result analysis to discriminate between 
+# scattered and unscattered photons
+# It must be attached to each and every volume for whom Compton interactions have to be recorded
+# Record the Compton event inside the phantom
+#/gate/frame_test/attachPhantomSD
+
+# ==================================
+#  P H Y S I C S (Since GATEv7.0)
+# ==================================
+/gate/physics/addPhysicsList  		emstandard_opt4
+#/gate/physics/addProcess XrayBoundary
+# ==================================
+#  C U T S
+# ==================================
+/gate/physics/setEMin 0.1 keV
+/gate/physics/setEMax 10 GeV
+/gate/physics/setDEDXBinning 350
+/gate/physics/setLambdaBinning 350
+
+#/gate/physics/Electron/SetCutInRegion   world 1 m
+#/gate/physics/Positron/SetCutInRegion   world 1 m
+
+/gate/physics/Gamma/SetCutInRegion      world 1 mm
+/gate/physics/Gamma/SetCutInRegion      CTscanner 1 mm
+
+/gate/physics/displayCuts
+
+#======================================================================================
+# P R O J E C T I O N (Interfile) *.hdr(header), *.sin(Binary image matrix projection)
+#======================================================================================
+############
+# CT Image #
+############
+/gate/output/imageCT/verbose 0
+/gate/output/imageCT/enable
+/gate/output/imageCT/setFileName output/M_KC04c2_soild06_FE_000_300_Aim60_70_2,5e8_wDG_wPG2,4P_25mmSDD_transmission_part8_74_84
+
+########################
+# Output root files	#
+########################
+
+#=======================================================================
+# D I G I T I Z E R
+#=======================================================================
+#############
+# DIGITIZER #
+#############
+/gate/digitizer/verbose 0
+# Adder
+/gate/digitizer/Singles/insert adder
+#/gate/digitizer/Singles/insert blurring
+
+# Readout (pixel = Depth 2)
+/gate/digitizer/Singles/insert readout
+/gate/digitizer/Singles/readout/setDepth 2
+
+## Energy blurring
+#/gate/digitizer/Singles/blurring/setResolution 0.10
+#/gate/digitizer/Singles/blurring/setEnergyOfReference 140. keV
+
+## Spatial blurring (Intrinsic spatial resolution)
+#/gate/digitizer/Singles/insert spblurring
+#/gate/digitizer/Singles/spblurring/setSpresolution 3.8 mm
+#/gate/digitizer/Singles/spblurring/verbose 0
+
+# Energy cut
+/gate/digitizer/Singles/insert thresholder
+/gate/digitizer/Singles/thresholder/setThreshold 10. keV
+#/gate/digitizer/Singles/thresholder/setThreshold 126. keV
+#/gate/digitizer/Singles/insert upholder
+#/gate/digitizer/Singles/upholder/setUphold 154. keV
+
+
+# ==================================
+# ! I N I T I A L I Z A T I O N !
+# ==================================
+/gate/run/initialize
+# ==================================
+#==============================================================================================
+# Source
+#==============================================================================================
+/gate/source/addSource mysource phaseSpace
+/gate/source/mysource/addPhaseSpaceFile 	out_source_phspace/phsp_outgoing_fancoll_V21c_150_7.5deg_1e11_filter_z136mm_restrictXY_increase10_oneVer.root
+/gate/source/mysource/setPhaseSpaceInWorldFrame
+
+/gate/source/mysource/setActivity 9.5e8 becquerel
+/gate/source/mysource/attachTo 	gap
+
+# ======================================
+#   R A N D O M
+# ======================================
+# JamesRandom Ranlux64 MersenneTwister
+/gate/random/setEngineName MersenneTwister
+#/gate/random/setEngineSeed default
+#/gate/random/setEngineSeed auto
+/gate/random/setEngineSeed 123456789
+#/gate/random/resetEngineFrom fileName
+/gate/random/verbose 1
+
+# E X P E R I M E N T
+#####
+
+# (Case 2) (#Proj = 64) (Rotation speed = 2.8125 deg/sec)
+# part1: 0~11, part2: 11~21 (0~1 cm)
+# part3: 21~32, part4: 32~42 (2~3 cm)
+# part5: 42~53, part6: 53~63 (4~5 cm)
+# part7: 63~74, part8: 74~84 (6~7 cm)
+# part9: 84~95, part10: 95~105 (8~9 cm)
+/gate/application/setTimeSlice     1 s
+/gate/application/setTimeStart     74 s	# 0, 
+/gate/application/setTimeStop      84 s	# 105s 
+
+/gate/application/startDAQ
+
+exit
