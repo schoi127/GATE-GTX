@@ -1,0 +1,163 @@
+#################################################################
+# 1/  V I S U A L I S A T I O N #################################
+#################################################################
+#/control/execute mac/Visu.mac
+#/vis/viewer/set/viewpointThetaPhi   	90 0
+#/vis/viewer/set/viewpointThetaPhi   	60 30
+/vis/viewer/set/viewpointThetaPhi 	89.999 90
+#/vis/viewer/set/viewpointThetaPhi   	-179.99 0
+/vis/viewer/zoom                    	30.0
+#/vis/disable
+
+#################################################################
+# 2/  V E R B O S I T Y   L E V E L #############################
+#################################################################
+/control/execute mac/Verbose.mac
+
+#################################################################
+# 3/ Materials
+#################################################################
+/gate/geometry/setMaterialDatabase 	GateMaterials.db
+
+#################################################################
+# 4/ Geometries
+#################################################################
+#==============================================================================================
+# Geometry (world)
+#==============================================================================================
+/gate/world/setMaterial             Vacuum
+/gate/world/geometry/setXLength     1.5 m 
+/gate/world/geometry/setYLength     1.5 m 
+/gate/world/geometry/setZLength     1.5 m
+
+#==============================================================================================
+# Beam Line Geometry  
+#==============================================================================================
+/control/execute 	mac/sources/fanbeam_coll_V21c.mac  	# both 'r' shape (mirroring), 54mmH, 4 mmT, slit 2mmW
+
+# Source activity will be attached to the 'source_volume (0,0,0)', but the ebeam will replace it.
+#============================================================
+# Force to quit particle simulation beyond this space
+#============================================================
+/gate/actor/addActor 	KillActor 		MykillActor
+/gate/actor/MykillActor/attachTo		CollB
+
+# Object 1 : Volumetric source (beam line will be attached to this volume...)
+#==============================================================================================
+/gate/world/daughters/name			emitter		# after focusing
+/gate/world/daughters/insert			cylinder
+/gate/emitter/geometry/setRmin		0 um
+/gate/emitter/geometry/setRmax		100 um			# FSS 200um
+/gate/emitter/geometry/setHeight		0.5 mm
+/gate/emitter/geometry/setPhiStart		0 deg
+/gate/emitter/geometry/setDeltaPhi		360 deg
+/gate/emitter/placement/setTranslation 	-10 0 -5 mm   # emitter to target distance (ETD)
+/gate/emitter/placement/setRotationAxis        0 1 0
+/gate/emitter/placement/setRotationAngle       90 deg
+/gate/emitter/setMaterial			Vacuum
+/gate/emitter/vis/setColor			green
+/gate/emitter/vis/forceSolid
+
+#==============================================================================================
+# Object 2 : Tungsten Target
+#==============================================================================================
+/gate/world/daughters/name			Wtar
+/gate/world/daughters/insert			cylinder
+/gate/Wtar/geometry/setRmin		0 mm
+/gate/Wtar/geometry/setRmax		5 mm
+/gate/Wtar/geometry/setHeight		0.5 mm
+/gate/Wtar/geometry/setPhiStart		0 deg
+/gate/Wtar/geometry/setDeltaPhi		360 deg
+/gate/Wtar/placement/setTranslation 	0.3 0 -5 mm   # always 0,0,0 (focal point)
+/gate/Wtar/placement/setRotationAxis        0 1 0
+/gate/Wtar/placement/setRotationAngle       95 deg # anode angle 5 deg
+/gate/Wtar/setMaterial			Tungsten
+/gate/Wtar/vis/setColor			red
+/gate/Wtar/vis/forceSolid
+
+#################################################################
+# Phase space actor attached to the target
+#################################################################
+/gate/actor/addActor PhaseSpaceActor              	ebeam_ps1
+/gate/actor/ebeam_ps1/save                       	output/AA01b_ps_ebeam_1nA.root
+/gate/actor/ebeam_ps1/attachTo                   	gap
+/gate/actor/ebeam_ps1/enableEkine                	true
+/gate/actor/ebeam_ps1/enableXPosition            	true
+/gate/actor/ebeam_ps1/enableYPosition            	true
+/gate/actor/ebeam_ps1/enableZPosition            	true
+/gate/actor/ebeam_ps1/enableXDirection           	true
+/gate/actor/ebeam_ps1/enableYDirection           	true
+/gate/actor/ebeam_ps1/enableZDirection           	true
+/gate/actor/ebeam_ps1/enableProductionVolume     	true 
+/gate/actor/ebeam_ps1/enableProductionProcess    	true
+/gate/actor/ebeam_ps1/enableParticleName         	true
+/gate/actor/ebeam_ps1/storeOutgoingParticles 		true
+/gate/actor/ebeam_ps1/storeSecondaries 		true
+/gate/actor/ebeam_ps1/enableWeight		   	false
+
+#==============================================================================================
+# Physics
+#==============================================================================================
+/gate/physics/addPhysicsList  emstandard_opt4
+#=========
+# Options
+#=========
+/gate/physics/setEMin 0.1 keV
+/gate/physics/setEMax 10 GeV
+/gate/physics/setDEDXBinning 350
+/gate/physics/setLambdaBinning 350
+
+
+/gate/physics/Gamma/SetCutInRegion      world 10 m
+/gate/physics/Electron/SetCutInRegion   world 10 m
+/gate/physics/Positron/SetCutInRegion   world 10 m
+
+/gate/physics/Gamma/SetCutInRegion      Wtar 0.1 um
+/gate/physics/Electron/SetCutInRegion   Wtar 0.1 um
+/gate/physics/Positron/SetCutInRegion   Wtar 0.1 um
+/gate/physics/SetMaxStepSizeInRegion    Wtar 0.1 um
+/gate/physics/ActivateStepLimiter 	e-
+
+/gate/physics/displayCuts
+
+#============================================================================================
+# Detector
+#============================================================================================
+# No Detector here
+
+#==============================================================================================
+# ! I N I T I A L I Z A T I O N !
+#==============================================================================================
+/gate/run/initialize
+
+#==============================================================================================
+# Source: e-beam
+#==============================================================================================
+/gate/source/addSource egun gps
+/gate/source/egun/gps/particle e-
+/gate/source/egun/gps/ene/mono 150 keV
+/gate/source/egun/gps/ene/type Mono
+/gate/source/egun/setActivity 6.28e9 Bq		# 1A=6.28e18 Bq/1s --> 1pA = e-12, 100pA = e-10, 1nA=e-9, 10nA=e-8, 1uA=e-6
+/gate/source/egun/gps/type Plane
+/gate/source/egun/gps/shape Circle   # actually, it is a disk
+/gate/source/egun/gps/radius 100 um
+/gate/source/egun/gps/centre 0 0 -3.5 um
+/gate/source/egun/gps/angtype iso
+/gate/source/egun/gps/mintheta 360. deg
+/gate/source/egun/gps/maxtheta 360. deg
+/gate/source/egun/gps/minphi 0. deg
+/gate/source/egun/gps/maxphi 360. deg
+/gate/source/egun/attachTo emitter
+
+
+/gate/random/setEngineName MersenneTwister
+
+/gate/application/setTimeSlice 1 s
+/gate/application/setTimeStart 0 s
+/gate/application/setTimeStop 1 s
+#/gate/random/setEngineSeed 3198611703547087212
+
+/gate/output/root/enable
+/gate/application/startDAQ
+
+exit

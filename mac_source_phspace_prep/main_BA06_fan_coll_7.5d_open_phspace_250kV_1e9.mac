@@ -1,0 +1,125 @@
+#################################################################
+# 1/  V I S U A L I S A T I O N #################################
+#################################################################
+#/vis/disable
+#/control/execute mac/Visu.mac
+#/vis/viewer/set/viewpointThetaPhi   	90 0
+#/vis/viewer/set/viewpointThetaPhi   	60 30
+/vis/viewer/set/viewpointThetaPhi 	89.999 90
+#/vis/viewer/set/viewpointThetaPhi   	179.99 0
+/vis/viewer/zoom                    	2.0
+
+#################################################################
+# 2/  V E R B O S I T Y   L E V E L #############################
+#################################################################
+/control/execute mac/Verbose.mac
+
+#==============================================================================================
+# Materials
+#==============================================================================================
+/gate/geometry/setMaterialDatabase 	GateMaterials.db
+
+#==============================================================================================
+# Geometry (world)
+#==============================================================================================
+/gate/world/setMaterial             Air
+/gate/world/geometry/setXLength     0.5 m 
+/gate/world/geometry/setYLength     0.5 m 
+/gate/world/geometry/setZLength     0.5 m
+
+#==============================================================================================
+# Fanbeam collimator
+#==============================================================================================
+/control/execute 	mac/fanbeam_coll_V21c.mac  
+
+# Make phase space actor to use it as a second source
+/control/execute 	mac/make_outgoing_phspace_source.mac
+/gate/actor/phsp/save 		out_source_phspace/phsp_outgoing_fancoll_V21c_250_7.5deg_1e9.root
+
+
+# ==================================
+#  P H Y S I C S (Since GATEv7.0)
+# ==================================
+/gate/physics/addPhysicsList  		emstandard_opt4
+#/gate/physics/addProcess XrayBoundary
+# ==================================
+#  C U T S
+# ==================================
+/gate/physics/setEMin 0.1 keV
+/gate/physics/setEMax 10 GeV
+/gate/physics/setDEDXBinning 350
+/gate/physics/setLambdaBinning 350
+
+#/gate/physics/Electron/SetCutInRegion   world 1 m
+#/gate/physics/Positron/SetCutInRegion   world 1 m
+/gate/physics/Gamma/SetCutInRegion      world 1 mm
+
+/gate/physics/displayCuts
+
+
+########################
+# Output root files	#
+########################
+/gate/output/root/enable
+
+# ==================================
+# ! I N I T I A L I Z A T I O N !
+# ==================================
+/gate/run/initialize
+# ==================================
+
+#Pencil-beam source
+/gate/source/addSource xraygun
+/gate/source/xraygun/gps/particle gamma
+/gate/source/xraygun/gps/energytype Arb
+/gate/source/xraygun/gps/histname arb
+/gate/source/xraygun/gps/emin 10.00 keV
+/gate/source/xraygun/gps/emax 200.00 keV
+/control/execute 	boone_txt/240618_HVCS60L09AD_250kVp_1000000000Bq_converted.mac   # load user spectrum
+#240618_HVCS60L09AD_100kVp_1000000000Bq_converted.mac
+#230807_HVCS60L09AD_150kVp_2000000000000Bq_converted.mac
+#240618_HVCS60L09AD_200kVp_1000000000Bq_converted.mac
+#240618_HVCS60L09AD_250kVp_1000000000Bq_converted.mac
+#240618_HVCS60L09AD_300kVp_1000000000Bq_converted.mac
+/gate/source/xraygun/gps/arbint Lin
+
+/gate/source/xraygun/gps/type Plane
+/gate/source/xraygun/gps/shape Rectangle
+/gate/source/xraygun/gps/halfx 0.15 mm
+/gate/source/xraygun/gps/halfy 0.15 mm
+/gate/source/xraygun/gps/mintheta 0  deg
+/gate/source/xraygun/gps/maxtheta  7.5 deg
+/gate/source/xraygun/gps/centre 0. 0. -0.0005 mm
+/gate/source/xraygun/gps/angtype iso
+
+/gate/source/verbose 0
+/gate/source/xraygun/gps/verbose 0
+/gate/source/xraygun/setActivity 1e9 becquerel
+/gate/source/list
+/gate/source/xraygun/attachTo source_volume
+
+#/gate/source/xraygun/gps/energytype Mono
+#/gate/source/xraygun/gps/monoenergy 200.00 keV
+
+# ======================================
+#   R A N D O M
+# ======================================
+# JamesRandom Ranlux64 MersenneTwister
+/gate/random/setEngineName MersenneTwister
+#/gate/random/setEngineSeed default
+/gate/random/setEngineSeed auto
+#/gate/random/setEngineSeed 123456789
+#/gate/random/resetEngineFrom fileName
+/gate/random/verbose 1
+
+# E X P E R I M E N T
+#####
+
+# (Case 2) (#Proj = 64) (Rotation speed = 2.8125 deg/sec)
+/gate/application/setTimeSlice     1 s
+/gate/application/setTimeStart     0 s	# 0, 32, 64, 96, 128, 160, 192
+/gate/application/setTimeStop      1 s	# 34, 66, 98, 130, 162, 194, 226
+
+/gate/application/startDAQ
+
+exit
