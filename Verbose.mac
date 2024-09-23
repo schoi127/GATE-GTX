@@ -1,0 +1,27 @@
+#---------------------------------------------------------------- #
+#                    V E R B O S I T Y	LEVEL         		  # 
+#---------------------------------------------------------------- #
+/gate/verbose Physic    1
+/gate/verbose Cuts      1
+/gate/verbose SD        0
+/gate/verbose Actions   0
+/gate/verbose Actor     0
+/gate/verbose Step      0
+/gate/verbose Error     1
+/gate/verbose Warning   1
+/gate/verbose Output    0
+/gate/verbose Beam      0
+/gate/verbose Volume    0
+/gate/verbose Image     0
+/gate/verbose Geometry  2
+/gate/verbose Core      1
+/run/verbose 2
+/event/verbose 0
+/tracking/verbose 0
+
+# Values from 0 to 2 are allowed, higher values will be interpreted as 2.
+# A value of 0 means no printing at all,
+# a value of 1 results in one printing at the beginning of the acquisition,
+# and a value of 2 results in one printing at each beginning of run.
+
+

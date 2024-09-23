@@ -1,0 +1,189 @@
+#################################################################
+# 1/  V I S U A L I S A T I O N #################################
+#################################################################
+#/vis/disable
+#/control/execute mac/Visu.mac
+#/vis/viewer/set/viewpointThetaPhi   	90 0
+#/vis/viewer/set/viewpointThetaPhi   	60 30
+/vis/viewer/set/viewpointThetaPhi 	89.999 90
+#/vis/viewer/set/viewpointThetaPhi   	-179.99 0
+/vis/viewer/zoom                    	5.0
+
+#################################################################
+# 2/  V E R B O S I T Y   L E V E L #############################
+#################################################################
+/control/execute mac/Verbose.mac
+
+#################################################################
+# 3/ Materials
+#################################################################
+/gate/geometry/setMaterialDatabase 	GateMaterials.db
+
+#################################################################
+# 4/ Geometries
+#################################################################
+#==============================================================================================
+# Geometry (world)
+#==============================================================================================
+/gate/world/setMaterial             Air
+/gate/world/geometry/setXLength     1.5 m 
+/gate/world/geometry/setYLength     1.5 m 
+/gate/world/geometry/setZLength     1.5 m
+
+#==============================================================================================
+# Geometry (Fanbeam collimator (phase space??))
+#==============================================================================================
+#	#/control/execute 	mac/fanbeam_coll_V21c.mac  # both 'r' shape (mirroring), 54mmH, 4 mmT, slit 2mmW
+#	#/gate/FanBeamModuleUp/moves/insert           translation
+#	#/gate/FanBeamModuleUp/translation/setSpeed   1 0 0 mm/s
+# 	## Make phase space actor to use it as a second source
+# 	##/control/execute 	mac/make_outgoing_phspace_source.mac
+#==========================================================
+# Attach phase space to the physical volume (air) with side collimator
+# A side collimator does not actually needed, but just for the visualization
+# to make sure the spot where the source came from
+#==========================================================
+#/control/execute 	mac/sources/fanbeam_coll_V21c.mac  # both 'r' shape (mirroring), 54mmH, 4 mmT, slit 2mmW
+/control/execute 	mac/sources/AttachedPhSpaceVol.mac
+/control/execute	mac/sources/BSKPhSpaceVol_1000_500.mac
+#==============================
+# ACTORS
+#==============================
+/gate/actor/addActor PhaseSpaceActor 	phsp2
+/gate/actor/phsp2/attachTo 			bskdetector
+/gate/actor/phsp2/enableEkine              true
+/gate/actor/phsp2/enableXPosition          true
+/gate/actor/phsp2/enableYPosition          true
+/gate/actor/phsp2/enableZPosition          true
+/gate/actor/phsp2/enableXDirection         true
+/gate/actor/phsp2/enableYDirection         true
+/gate/actor/phsp2/enableZDirection         true
+/gate/actor/phsp2/enableProductionVolume   true
+/gate/actor/phsp2/enableProductionProcess  true
+/gate/actor/phsp2/enableParticleName       true
+/gate/actor/phsp2/enableWeight             false
+/gate/actor/phsp2/storeOutgoingParticles   false
+/gate/actor/phsp2/save 		output/M_BAAC2_phsp_bsk_crosssection_150_7.5deg_1e11_ROCK.root
+
+#==============================================================================================
+# Geometry (Line scanner)
+#==============================================================================================
+# 1.2 mm pixel width (original)
+
+#==============================================================================================
+# Geometry (Pixel Grid)
+# PixelGrid : 20mmH+30mmH(extra)=50mmH, 0.6T, 2.4mmpitch, 70 layers
+# DepthGrid : 2mmW both side, 
+# GridContainer : 3 + 2*2 = 7mmW
+#==============================================================================================
+
+#################################################################
+# 5/ PHANTOM
+#################################################################
+#/control/execute 	mac/phantoms/bsk_cross_section_by_material/AA00_PE_40mmDepth.mac
+#/control/execute 	mac/phantoms/bsk_cross_section_by_material/AB00_HandBone_40mmDepth.mac
+/control/execute 	mac/phantoms/bsk_cross_section_by_material/AC00_Rock_40mmDepth.mac
+#/control/execute 	mac/phantoms/bsk_cross_section_by_material/AD00_Soil06d_40mmDepth.mac
+
+
+#################################################################
+# 6/ Geometry Optimization
+#################################################################
+#################################################################
+# 7/ Add motion
+#################################################################
+# source
+#==========================================================
+#==========================================================
+# Detector
+#==========================================================
+#==========================================================
+# grid
+#==========================================================
+
+# ======================================
+# S Y S T E M
+# ======================================
+
+# ==================================
+#  P H Y S I C S (Since GATEv7.0)
+# ==================================
+/gate/physics/addPhysicsList  		emstandard_opt4
+#/gate/physics/addProcess XrayBoundary
+# ==================================
+#  C U T S
+# ==================================
+/gate/physics/setEMin 0.1 keV
+/gate/physics/setEMax 10 GeV
+/gate/physics/setDEDXBinning 350
+/gate/physics/setLambdaBinning 350
+
+/gate/physics/Gamma/SetCutInRegion      world 1 mm
+
+/gate/physics/displayCuts
+
+#======================================================================================
+# P R O J E C T I O N (Interfile) *.hdr(header), *.sin(Binary image matrix projection)
+#======================================================================================
+############
+# CT Image #
+############
+
+########################
+# Output root files	#
+########################
+/gate/output/root/enable
+#=======================================================================
+# D I G I T I Z E R
+#=======================================================================
+#############
+# DIGITIZER #
+#############
+/gate/digitizer/verbose 0
+# Adder
+
+# Readout (pixel = Depth 2)
+
+## Energy blurring
+
+## Spatial blurring (Intrinsic spatial resolution)
+
+# Energy cut
+
+# ==================================
+# ! I N I T I A L I Z A T I O N !
+# ==================================
+/gate/run/initialize
+# ==================================
+#==============================================================================================
+# Source
+#==============================================================================================
+/gate/source/addSource mysource phaseSpace
+/gate/source/mysource/addPhaseSpaceFile 	out_source_phspace/phsp_outgoing_fancoll_V21c_150_7.5deg_1e11_filter_z136mm_restrictXY_oneVer.root
+/gate/source/mysource/setPhaseSpaceInWorldFrame
+
+/gate/source/mysource/setActivity 2.6e8 becquerel
+/gate/source/mysource/attachTo 	gap
+
+# ======================================
+#   R A N D O M
+# ======================================
+# JamesRandom Ranlux64 MersenneTwister
+/gate/random/setEngineName MersenneTwister
+#/gate/random/setEngineSeed default
+#/gate/random/setEngineSeed auto
+/gate/random/setEngineSeed 123456789
+#/gate/random/resetEngineFrom fileName
+/gate/random/verbose 1
+
+# E X P E R I M E N T
+#####
+
+# (Case 2) (#Proj = 64) (Rotation speed = 2.8125 deg/sec)
+/gate/application/setTimeSlice     1 s
+/gate/application/setTimeStart     0 s	
+/gate/application/setTimeStop      1 s	
+
+/gate/application/startDAQ
+
+exit

@@ -1,0 +1,18 @@
+#==============================
+# ACTORS
+#==============================
+/gate/actor/addActor PhaseSpaceActor 	phsp
+/gate/actor/phsp/attachTo 			gap
+/gate/actor/phsp/enableEkine              true
+/gate/actor/phsp/enableXPosition          true
+/gate/actor/phsp/enableYPosition          true
+/gate/actor/phsp/enableZPosition          true
+/gate/actor/phsp/enableXDirection         true
+/gate/actor/phsp/enableYDirection         true
+/gate/actor/phsp/enableZDirection         true
+/gate/actor/phsp/enableProductionVolume   true
+/gate/actor/phsp/enableProductionProcess  true
+/gate/actor/phsp/enableParticleName       true
+/gate/actor/phsp/enableWeight             false
+/gate/actor/phsp/storeOutgoingParticles   true
+

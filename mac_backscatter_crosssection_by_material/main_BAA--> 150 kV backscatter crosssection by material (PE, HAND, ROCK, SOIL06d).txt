@@ -1,0 +1,13 @@
+2024-03-11
+
+[AA : ebeam current <-> X-ray quantity cross-validation]
+
+
+[BA : X-ray fanbeam phase space]
+
+
+[CA : phase space file to XBI imaging]
+CA01 : 표면에 드러나있는 공기 배경 피사체 (plastic)
+CB01 : 표면에 드러나있는 흙 배경 피사체 (plastic)
+CC01 : 지면 아래 1cm 흙 배경 피사체 (plastic)
+
